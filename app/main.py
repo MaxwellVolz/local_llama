@@ -47,36 +47,53 @@ logging.info(f"Model loaded: {MODEL_NAME}")
 
 
 @app.get("/chat")
-def chat(prompt: str):
+def chat(prompt: str, temperature: float = 0.7, top_p: float = 0.9, max_tokens: int = 200):
     """
     Handles user input and generates a response using the Meta Llama model.
-    Logs request duration, input, and response.
+    Logs request duration, input, response, and generation parameters.
     """
     start_time = time.time()  # Track request start time
 
     try:
         logging.info(f"Received prompt: {prompt}")
+        logging.info(f"Generation parameters - Temperature: {temperature}, Top-P: {top_p}, Max Tokens: {max_tokens}")
 
         # Generate response
-        inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
-        output = model.generate(**inputs, max_new_tokens=50)
+        inputs = tokenizer(prompt, return_tensors="pt", truncation=False).to("cuda")
+        output = model.generate(
+            **inputs,
+            max_new_tokens=max_tokens,
+            eos_token_id=tokenizer.eos_token_id,
+            temperature=temperature,
+            top_p=top_p
+        )
 
         # Decode response
         response_text = tokenizer.decode(output[0], skip_special_tokens=True)
         request_duration = round(time.time() - start_time, 3)
 
+        # Log token usage
+        input_tokens = len(inputs["input_ids"][0])
+        output_tokens = len(output[0]) - input_tokens
+        total_tokens = input_tokens + output_tokens
+
         logging.info(f"Response: {response_text}")
         logging.info(f"Request Duration: {request_duration} sec")
+        logging.info(f"Token Usage - Input Tokens: {input_tokens}, Output Tokens: {output_tokens}, Total Tokens: {total_tokens}")
 
         return {
             "response": response_text,
             "duration": request_duration,
-            "model": MODEL_NAME
+            "model": MODEL_NAME,
+            "temperature": temperature,
+            "top_p": top_p,
+            "max_tokens": max_tokens,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "total_tokens": total_tokens
         }
 
     except Exception as e:
         error_msg = f"Error processing request: {str(e)}"
         logging.error(error_msg)
         return {"error": error_msg}
-
-
