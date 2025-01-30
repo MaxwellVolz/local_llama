@@ -1,7 +1,7 @@
 FROM ubuntu:22.04
 
 # Install dependencies
-RUN apt update && apt install -y git build-essential python3 python3-pip
+RUN apt update && apt install -y git build-essential python3 python3-pip wget curl cmake
 
 # Set working directory
 WORKDIR /app
@@ -10,17 +10,10 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Clone llama.cpp and build it
-RUN git clone https://github.com/ggerganov/llama.cpp.git && \
-    cd llama.cpp && make -j$(nproc)
+# Copy everything, assuming `main.py` is inside an `app/` folder
+COPY . /app  
 
-# Copy the model file (Assumes it's manually downloaded)
-COPY models/mistral-7b-q4_0.gguf /app/models/mistral-7b-q4_0.gguf
-
-# Copy FastAPI app
-COPY app /app
-
-# Expose port
+# Expose API port
 EXPOSE 8000
 
 # Run FastAPI server

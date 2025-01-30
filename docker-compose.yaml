@@ -8,3 +8,5 @@ services:
     restart: unless-stopped
     volumes:
       - ./models:/app/models  # Ensure models persist
+    env_file:
+      - .env

@@ -1,3 +1,5 @@
 fastapi
 uvicorn
-llama-stack
+transformers
+torch
+python-dotenv

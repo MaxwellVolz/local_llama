@@ -18,20 +18,11 @@ This project runs a **local AI assistant** on a CPU-only machine using:
 
 ## Installation & Setup
 
-### 1. Download the Model
-Before building the Docker image, **download the model**:- [local\_llama](#local_llama)
-
-
-```bash
-mkdir models
-cd models
-wget https://huggingface.co/TheBloke/Mistral-7B-GGUF/resolve/main/mistral-7b-q4_0.gguf
-```
-
 ### 2. Build and Run in Docker
 
 ```bash
-docker-compose up --build -d
+docker build -t llm-chat .
+docker run -d --name llm-server -p 8000:8000 llm-chat
 ```
 ### 3. Test the Chat API
 

@@ -1,22 +1,51 @@
 from fastapi import FastAPI
-import subprocess
+from transformers import AutoModelForCausalLM, AutoTokenizer
+import torch
+from dotenv import load_dotenv
+from huggingface_hub import login
 import os
+
+load_dotenv()
+
+
+huggingface_token = os.getenv("HUGGINGFACE_TOKEN")
+
+if not huggingface_token:
+    raise ValueError("Hugging Face token not found! Make sure it's set in the environment.")
+
+login(token=huggingface_token)
 
 app = FastAPI()
 
-LLAMA_PATH = "/app/llama.cpp/main"
-MODEL_PATH = "/app/models/mistral-7b-q4_0.gguf"
+## Requires Meta official LlaMA 2 access
+model_name = "meta-llama/Llama-2-7b-chat-hf"  # Change this for different sizes
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", torch_dtype=torch.float16)
+
+# Open Variant
+# model_name = "togethercomputer/llama-2-7b-chat"
+# tokenizer = AutoTokenizer.from_pretrained(model_name)
+# model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", torch_dtype=torch.float16)
+
 
 @app.get("/chat")
 def chat(prompt: str):
-    if not os.path.exists(MODEL_PATH):
-        return {"error": "Model file not found"}
+    """
+    Handles user input and generates a response using the Meta Llama model.
+    """
+    try:
+        print(f"Received prompt: {prompt}")
 
-    # Run llama.cpp as a subprocess
-    result = subprocess.run(
-        [LLAMA_PATH, "-m", MODEL_PATH, "-p", prompt, "-t", "8", "--n-predict", "256"],
-        capture_output=True,
-        text=True
-    )
+        # Generate a response
+        inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
+        output = model.generate(**inputs, max_new_tokens=50)
 
-    return {"response": result.stdout.strip()}
+        # Decode and print
+        response_text = tokenizer.decode(output[0], skip_special_tokens=True)
+        print(f"Response text: {response_text}")
+
+        return {"response": response_text}
+
+    except Exception as e:
+        print(f"Error processing request: {e}")
+        return {"error": str(e)}
