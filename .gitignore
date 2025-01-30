@@ -4,6 +4,7 @@ models
 
 ## Python
 venv
+app/__pycache__
 
 # Logs
 logs
