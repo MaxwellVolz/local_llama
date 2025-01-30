@@ -47,7 +47,7 @@ logging.info(f"Model loaded: {MODEL_NAME}")
 
 
 @app.get("/chat")
-def chat(prompt: str, temperature: float = 0.7, top_p: float = 0.9, max_tokens: int = 200):
+def chat(prompt: str, temperature: float = 1.4, top_p: float = 0.6, max_tokens: int = 200):
     """
     Handles user input and generates a response using the Meta Llama model.
     Logs request duration, input, response, and generation parameters.
